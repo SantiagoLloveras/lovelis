@@ -1,7 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Tipografía base */
 body {
+  font-family: 'Poppins', sans-serif;
   @apply bg-beige text-gray-800;
+}
+
+/* espacio para header fijo */
+#root > .min-h-screen {
+  padding-top: 72px; /* ajusta si el header cambia de tamaño */
 }
