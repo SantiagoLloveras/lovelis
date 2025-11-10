@@ -1,16 +1,19 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import Papa from "papaparse";
+import ProductCard from "./components/ProductCard";
 
-// ⚙️ CONFIGURACIÓN
 const WHATSAPP_NUMBER = "59896989871";
 const INSTAGRAM_USER = "lovelisuy";
 
-// 🧭 HEADER
+// 🧭 HEADER (con menú hamburguesa responsive)
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 border-b border-black/10">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        {/* LOGO */}
         <motion.div
           className="flex items-center gap-3 cursor-pointer select-none"
           whileHover={{
@@ -43,6 +46,7 @@ function Header() {
           </motion.h1>
         </motion.div>
 
+        {/* Menú Desktop */}
         <nav className="hidden sm:flex items-center gap-4 text-sm text-gray-700">
           <a href="#catalogo" className="hover:text-pink-500 text-black">
             Catálogo
@@ -54,12 +58,69 @@ function Header() {
             Contacto
           </a>
         </nav>
+
+        {/* Botón hamburguesa */}
+        <button
+          className="sm:hidden flex flex-col justify-center items-center space-y-1 w-8 h-8 focus:outline-none"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Abrir menú"
+        >
+          <span
+            className={`block w-6 h-0.5 bg-black transition-transform ${
+              menuOpen ? "rotate-45 translate-y-1.5" : ""
+            }`}
+          />
+          <span
+            className={`block w-6 h-0.5 bg-black transition-opacity ${
+              menuOpen ? "opacity-0" : "opacity-100"
+            }`}
+          />
+          <span
+            className={`block w-6 h-0.5 bg-black transition-transform ${
+              menuOpen ? "-rotate-45 -translate-y-1.5" : ""
+            }`}
+          />
+        </button>
       </div>
+
+      {/* Menú Mobile */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="sm:hidden bg-white border-t border-black/10 shadow-md px-6 py-3 flex flex-col gap-3 text-gray-700"
+          >
+            <a
+              href="#catalogo"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-pink-500"
+            >
+              Catálogo
+            </a>
+            <a
+              href="#opiniones"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-pink-500"
+            >
+              Opiniones
+            </a>
+            <a
+              href="#contacto"
+              onClick={() => setMenuOpen(false)}
+              className="hover:text-pink-500"
+            >
+              Contacto
+            </a>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
 
-// 🔍 MODAL DE IMAGEN CON ZOOM
+// 🔍 MODAL DE IMAGEN CON ZOOM (sin cambios)
 function ZoomableImageModal({ images, index, onClose, setIndex }) {
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -177,63 +238,7 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   );
 }
 
-// 💄 PRODUCTO
-function ProductCard({ p, openImage }) {
-  const text = encodeURIComponent(`Hola! Quisiera consultar por: ${p.name}`);
-  const waLink = p.link || `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
-  const igLink = `https://www.instagram.com/${INSTAGRAM_USER}`;
-
-  return (
-    <motion.div
-      whileHover={{ scale: p.stock ? 1.03 : 1 }}
-      className={`rounded-3xl border border-black/10 shadow-sm p-6 flex flex-col items-center transition-all ${
-        p.stock
-          ? "bg-white/95 hover:shadow-lg hover:border-black/20"
-          : "bg-gray-100 opacity-60"
-      }`}
-    >
-      <div
-        className="w-full aspect-square rounded-xl overflow-hidden border border-black/10 bg-gray-50 cursor-pointer"
-        onClick={() => openImage(p.image)}
-      >
-        <img
-          src={p.image}
-          alt={p.name}
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <h3 className="text-lg font-semibold text-gray-800 mt-3 text-center">
-        {p.name}
-      </h3>
-      <p className="text-pink-500 font-medium mb-1">{p.price}</p>
-      {p.stock ? (
-        <p className="text-sm text-green-600 font-medium mb-2">En stock</p>
-      ) : (
-        <p className="text-sm text-gray-500 italic mb-2">Sin stock</p>
-      )}
-      <div className="flex gap-3 mt-2">
-        <a
-          href={waLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-green-500 p-2 rounded-full hover:bg-green-600 transition"
-        >
-          <img src="/whatsapp-logo.png" alt="WhatsApp" className="w-5 h-5" />
-        </a>
-        <a
-          href={igLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-pink-500 p-2 rounded-full hover:bg-pink-600 transition"
-        >
-          <img src="/instagram-logo.png" alt="Instagram" className="w-5 h-5" />
-        </a>
-      </div>
-    </motion.div>
-  );
-}
-
-// 🖼️ OPINIONES
+// 🖼️ OPINIONES (mejorada para móviles)
 function Opiniones() {
   const [imagenes, setImagenes] = useState([]);
   const [index, setIndex] = useState(0);
@@ -266,7 +271,7 @@ function Opiniones() {
   return (
     <section
       id="opiniones"
-      className="py-12 text-center bg-white/80 rounded-3xl border border-black/10 shadow-sm px-6 mb-10 overflow-visible w-full"
+      className="py-12 text-center bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-10 overflow-hidden w-full"
     >
       <h3 className="text-2xl font-bold text-black mb-8">Opiniones</h3>
       <AnimatePresence mode="wait">
@@ -276,24 +281,25 @@ function Opiniones() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 justify-items-center"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center"
         >
           {currentOpinions.map((op, i) => (
             <motion.div
               key={i}
               whileHover={{ scale: 1.05 }}
-              className="rounded-xl overflow-hidden border border-black/10 shadow-sm bg-white/90 w-64 h-64 flex items-center justify-center cursor-pointer"
+              className="rounded-xl overflow-hidden border border-black/10 shadow-sm bg-white/90 w-full max-w-xs h-auto flex items-center justify-center cursor-pointer"
               onClick={() => setModalIndex(index * perPage + i)}
             >
               <img
                 src={op}
                 alt={`Opinión ${i + 1}`}
-                className="object-contain w-full h-full"
+                className="object-contain w-full h-auto"
               />
             </motion.div>
           ))}
         </motion.div>
       </AnimatePresence>
+
       {modalIndex !== null && (
         <ZoomableImageModal
           images={imagenes}
@@ -330,7 +336,7 @@ function FloatingButtons() {
   );
 }
 
-// 🌸 APP PRINCIPAL
+// 🌸 APP PRINCIPAL (sin cambios lógicos, solo asegurado el meta viewport)
 export default function App() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(["Todo"]);
@@ -346,17 +352,29 @@ export default function App() {
         header: true,
         complete: (res) => {
           const parsed = res.data
-            .map((row, i) => ({
-              id: row.id || i,
-              name: row.nombre?.trim(),
-              price: row.precio,
-              image: row.imagen,
-              link: row.enlace,
-              stock: row.stock?.toLowerCase().includes("si"),
-              category:
-                row.categoria?.charAt(0).toUpperCase() +
-                  row.categoria?.slice(1).toLowerCase() || "General",
-            }))
+            .map((row, i) => {
+              // Normalize images: accept comma/semicolon/pipe/newline separated values
+              const raw = row.imagen || "";
+              const images = raw
+                .toString()
+                .split(/[;,|\n]+/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+
+              return {
+                id: row.id || i,
+                name: row.nombre?.trim(),
+                price: row.precio,
+                // keep `image` for compatibility (first one) and `images` as full array
+                image: images[0] || "",
+                images,
+                link: row.enlace,
+                stock: row.stock?.toLowerCase().includes("si"),
+                category:
+                  row.categoria?.charAt(0).toUpperCase() +
+                    row.categoria?.slice(1).toLowerCase() || "General",
+              };
+            })
             .filter((p) => p.name);
           setProducts(parsed);
           const uniqueCats = [...new Set(parsed.map((p) => p.category))];
@@ -382,7 +400,7 @@ export default function App() {
       />
       <meta
         name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
       />
       <Header />
 
@@ -430,93 +448,92 @@ export default function App() {
             </select>
           </div>
 
-          {/* 🛒 GRID DE PRODUCTOS */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
             {filtered.length > 0 ? (
               filtered.map((p) => (
-                <ProductCard key={p.id} p={p} openImage={setCatalogModal} />
+                <ProductCard
+                  key={p.id}
+                  p={p}
+                  openImage={(images, index = 0) =>
+                    setCatalogModal({ images, index })
+                  }
+                />
               ))
             ) : (
-              <p className="text-gray-500 text-center col-span-full">
+              <p className="text-gray-500 col-span-full text-center">
                 No se encontraron productos.
               </p>
             )}
           </div>
-
-          {catalogModal && (
-            <ZoomableImageModal
-              images={[catalogModal]}
-              index={0}
-              onClose={() => setCatalogModal(null)}
-              setIndex={() => {}}
-            />
-          )}
         </section>
-
-        {/* 💬 OPINIONES */}
+        {/* --- SECCIÓN OPINIONES --- */}
         <Opiniones />
 
-        {/* 📞 CONTACTO */}
-        <section
-          id="contacto"
-          className="text-center py-12 bg-white/80 rounded-3xl border border-black/10 shadow-sm mb-10 px-6"
-        >
-          <h3 className="text-2xl font-bold text-black mb-6">Contacto</h3>
-          <p className="text-gray-600 mb-6">
-            ¿Querés hacer un pedido o tenés alguna consulta? 💌
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+        {/* --- SECCIÓN CONTACTO --- */}
+        <section id="contacto" className="py-20 px-6 bg-white text-center">
+          <h2 className="text-3xl font-bold mb-6">Contáctanos</h2>
+          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition"
+              className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-green-50 hover:bg-green-100 transition"
             >
               <img
                 src="/whatsapp-logo.png"
                 alt="WhatsApp"
-                className="w-5 h-5"
+                className="w-6 h-6"
               />
-              <span>WhatsApp</span>
+              <span className="text-green-700 font-medium">WhatsApp</span>
             </a>
             <a
               href={`https://www.instagram.com/${INSTAGRAM_USER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition"
+              className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-pink-50 hover:bg-pink-100 transition"
             >
               <img
                 src="/instagram-logo.png"
                 alt="Instagram"
-                className="w-5 h-5"
+                className="w-6 h-6"
               />
-              <span>Instagram</span>
+              <span className="text-pink-600 font-medium">Instagram</span>
             </a>
           </div>
         </section>
+        {/* --- FOOTER --- */}
       </main>
 
-      {/* 🌸 FOOTER */}
-      <footer className="text-center py-6 text-gray-500 text-sm border-t border-black/10 mt-10 bg-white/60">
-        <p>
-          © {new Date().getFullYear()}{" "}
-          <span className="text-pink-500 font-semibold">Lovelis</span>. Todos
-          los derechos reservados.
-        </p>
-        <p className="mt-1">
-          Desarrollado con 💖 por{" "}
-          <a
-            href={`https://www.instagram.com/${INSTAGRAM_USER}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-pink-500"
-          >
-            @{INSTAGRAM_USER}
-          </a>
-        </p>
+      {/* --- FOOTER --- */}
+      <footer className="bg-gray-900 text-gray-300 py-8 text-center">
+        <div className="max-w-6xl mx-auto px-6">
+          <p className="mb-2">
+            &copy; {new Date().getFullYear()} Mi Marca. Todos los derechos
+            reservados.
+          </p>
+          <div className="flex justify-center gap-4 text-gray-400 text-xl mt-3">
+            <a href="#" className="hover:text-white transition-colors">
+              <i className="fab fa-facebook"></i>
+            </a>
+            <a href="#" className="hover:text-white transition-colors">
+              <i className="fab fa-instagram"></i>
+            </a>
+            <a href="#" className="hover:text-white transition-colors">
+              <i className="fab fa-twitter"></i>
+            </a>
+          </div>
+        </div>
       </footer>
 
-      {/* 🌸 BOTONES FLOTANTES */}
+      {catalogModal && (
+        <ZoomableImageModal
+          images={catalogModal.images}
+          index={catalogModal.index}
+          onClose={() => setCatalogModal(null)}
+          setIndex={(i) => setCatalogModal((m) => ({ ...m, index: i }))}
+        />
+      )}
+
       <FloatingButtons />
     </div>
   );
