@@ -8,22 +8,42 @@ const INSTAGRAM_USER = "lovelisuy";
 
 // 🧭 HEADER
 function Header() {
+  // ✨ Efecto hover con framer-motion
   return (
     <header className="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 border-b border-black/10">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img
+        <motion.div
+          className="flex items-center gap-3 cursor-pointer select-none"
+          whileHover={{
+            scale: 1.05,
+            filter: "drop-shadow(0 0 6px rgba(255, 105, 180, 0.6))",
+          }}
+          transition={{ type: "spring", stiffness: 200, damping: 10 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <motion.img
             src="/logo.png"
             alt="Lovelis"
             className="h-10 w-10 object-contain"
+            whileHover={{
+              scale: 1.15,
+              rotate: [0, -5, 5, 0],
+              transition: { duration: 0.6 },
+            }}
           />
-          <h1
+          <motion.h1
             className="text-5xl text-black tracking-wide"
             style={{ fontFamily: "'Pinyon Script', cursive" }}
+            whileHover={{
+              textShadow: "0px 0px 12px rgba(255, 105, 180, 0.8)",
+              color: "#ff69b4",
+            }}
+            transition={{ duration: 0.3 }}
           >
             Lovelis
-          </h1>
-        </div>
+          </motion.h1>
+        </motion.div>
+
         <nav className="hidden sm:flex items-center gap-4 text-sm text-gray-700">
           <a href="#catalogo" className="hover:text-pink-500 text-black">
             Catálogo
@@ -313,10 +333,9 @@ export default function App() {
               image: row.imagen,
               link: row.enlace,
               stock: row.stock?.toLowerCase() === "si",
-              category: row.categoria
-                ? row.categoria.charAt(0).toUpperCase() +
-                  row.categoria.slice(1).toLowerCase()
-                : "General",
+              category:
+                row.categoria?.charAt(0).toUpperCase() +
+                  row.categoria?.slice(1).toLowerCase() || "General",
             }))
             .filter((p) => p.name);
           setProducts(parsed);
@@ -427,35 +446,52 @@ export default function App() {
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 text-white px-6 py-3 rounded-full hover:from-green-500 hover:to-green-600 transition"
+              className="flex items-center gap-
+2 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition"
             >
               <img
                 src="/whatsapp-logo.png"
                 alt="WhatsApp"
                 className="w-5 h-5"
-              />{" "}
-              WhatsApp
+              />
+              <span>WhatsApp</span>
             </a>
             <a
               href={`https://www.instagram.com/${INSTAGRAM_USER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-gradient-to-r from-pink-400 to-pink-500 text-white px-6 py-3 rounded-full hover:from-pink-500 hover:to-pink-600 transition"
+              className="flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition"
             >
               <img
                 src="/instagram-logo.png"
                 alt="Instagram"
                 className="w-5 h-5"
-              />{" "}
-              Instagram
+              />
+              <span>Instagram</span>
             </a>
           </div>
         </section>
-
-        <footer className="mt-12 text-sm text-gray-500 text-center">
-          © {new Date().getFullYear()} Lovelis. Todos los derechos reservados.
-        </footer>
       </main>
+
+      {/* 🌸 FOOTER */}
+      <footer className="text-center py-6 text-gray-500 text-sm border-t border-black/10 mt-10 bg-white/60">
+        <p>
+          © {new Date().getFullYear()}{" "}
+          <span className="text-pink-500 font-semibold">Lovelis</span>. Todos
+          los derechos reservados.
+        </p>
+        <p className="mt-1">
+          Desarrollado con 💖 por{" "}
+          <a
+            href={`https://www.instagram.com/${INSTAGRAM_USER}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-pink-500"
+          >
+            @{INSTAGRAM_USER}
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
