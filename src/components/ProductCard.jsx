@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { INSTAGRAM_USER } from "../data/contactConfig";
+import { ToastContext } from "./ToastProvider";
 
 export default function ProductCard({ p, openImage }) {
   // Normalize images: accept comma/semicolon/pipe separated lists or single URL
@@ -14,12 +15,7 @@ export default function ProductCard({ p, openImage }) {
           .filter(Boolean)) || [];
 
   const [loaded, setLoaded] = useState(false);
-  const [toast, setToast] = useState("");
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
+  const { showToast } = useContext(ToastContext);
 
   const consultInstagram = (e) => {
     e.stopPropagation();
@@ -127,11 +123,7 @@ export default function ProductCard({ p, openImage }) {
         </div>
       </div>
 
-      {toast && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 bg-black/80 text-white text-xs px-3 py-2 rounded">
-          {toast}
-        </div>
-      )}
+      {/* toasts are handled globally by ToastProvider */}
     </div>
   );
 }

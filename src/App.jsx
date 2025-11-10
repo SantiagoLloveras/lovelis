@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import Papa from "papaparse";
+import ToastProvider from "./components/ToastProvider";
 import ProductCard from "./components/ProductCard";
 import { WHATSAPP_NUMBER, INSTAGRAM_USER } from "./data/contactConfig";
 
@@ -433,164 +434,166 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100 overflow-visible font-sans antialiased">
-      <link
-        href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
-        rel="stylesheet"
-      />
-      <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-      />
-      <Header />
-
-      <main className="max-w-6xl mx-auto px-3 sm:px-4 pt-28 pb-8 overflow-visible">
-        <section className="text-center bg-white/70 rounded-3xl border border-black/10 shadow-sm mb-8 py-8">
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-6xl text-black mb-4"
-            style={{ fontFamily: "'Pinyon Script', cursive" }}
-          >
-            💖 Lovelis 💖
-          </motion.h1>
-          <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-            Perfumes, maquillaje, accesorios y más.
-          </p>
-        </section>
-
-        {/* 🛍️ CATÁLOGO */}
-        <section
-          id="catalogo"
-          className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-8 overflow-visible w-full"
-        >
-          <h2 className="text-3xl font-bold text-black mb-8 text-center">
-            Catálogo
-          </h2>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-            <input
-              type="text"
-              placeholder="Buscar producto..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/2 focus:ring-2 focus:ring-pink-300 outline-none"
-            />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/3 focus:ring-2 focus:ring-pink-300 outline-none bg-white text-gray-700"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-            {filtered.length > 0 ? (
-              filtered.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  p={p}
-                  openImage={(images, index = 0) =>
-                    setCatalogModal({ images, index })
-                  }
-                />
-              ))
-            ) : (
-              <p className="text-gray-500 col-span-full text-center">
-                No se encontraron productos.
-              </p>
-            )}
-          </div>
-        </section>
-        {/* --- SECCIÓN OPINIONES --- */}
-        <Opiniones />
-
-        {/* --- SECCIÓN CONTACTO --- */}
-        <section id="contacto" className="py-20 px-6 bg-white text-center">
-          <h2 className="text-3xl font-bold mb-6">Contáctanos</h2>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-green-50 hover:bg-green-100 transition"
-            >
-              <img
-                src="/whatsapp-logo.png"
-                alt="WhatsApp"
-                className="w-6 h-6"
-              />
-              <span className="text-green-700 font-medium">WhatsApp</span>
-            </a>
-            <a
-              href={`https://www.instagram.com/${INSTAGRAM_USER}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-pink-50 hover:bg-pink-100 transition"
-            >
-              <img
-                src="/instagram-logo.png"
-                alt="Instagram"
-                className="w-6 h-6"
-              />
-              <span className="text-pink-600 font-medium">Instagram</span>
-            </a>
-          </div>
-        </section>
-        {/* --- FOOTER --- */}
-      </main>
-
-      {/* --- FOOTER --- */}
-      <footer className="bg-gray-900 text-gray-300 py-8 text-center">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="mb-2">
-            &copy; {new Date().getFullYear()} Lovelis. Todos los derechos
-            reservados.
-          </p>
-          <p className="text-sm text-gray-500">
-            Desarrollado con ❤️ por Santiago Lloveras
-          </p>
-          <div className="flex justify-center gap-4 text-gray-400 text-xl mt-3">
-            <a
-              href="#"
-              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
-            >
-              <i className="fab fa-facebook"></i>
-            </a>
-            <a
-              href="#"
-              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
-            >
-              <i className="fab fa-instagram"></i>
-            </a>
-            <a
-              href="#"
-              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
-            >
-              <i className="fab fa-twitter"></i>
-            </a>
-          </div>
-        </div>
-      </footer>
-
-      {catalogModal && (
-        <ZoomableImageModal
-          images={catalogModal.images}
-          index={catalogModal.index}
-          onClose={() => setCatalogModal(null)}
-          setIndex={(i) => setCatalogModal((m) => ({ ...m, index: i }))}
+    <ToastProvider>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100 overflow-visible font-sans antialiased">
+        <link
+          href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap"
+          rel="stylesheet"
         />
-      )}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+        />
+        <Header />
 
-      <FloatingButtons />
-    </div>
+        <main className="max-w-6xl mx-auto px-3 sm:px-4 pt-28 pb-8 overflow-visible">
+          <section className="text-center bg-white/70 rounded-3xl border border-black/10 shadow-sm mb-8 py-8">
+            <motion.h1
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-6xl text-black mb-4"
+              style={{ fontFamily: "'Pinyon Script', cursive" }}
+            >
+              💖 Lovelis 💖
+            </motion.h1>
+            <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+              Perfumes, maquillaje, accesorios y más.
+            </p>
+          </section>
+
+          {/* 🛍️ CATÁLOGO */}
+          <section
+            id="catalogo"
+            className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-8 overflow-visible w-full"
+          >
+            <h2 className="text-3xl font-bold text-black mb-8 text-center">
+              Catálogo
+            </h2>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+              <input
+                type="text"
+                placeholder="Buscar producto..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/2 focus:ring-2 focus:ring-pink-300 outline-none"
+              />
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/3 focus:ring-2 focus:ring-pink-300 outline-none bg-white text-gray-700"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+              {filtered.length > 0 ? (
+                filtered.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    p={p}
+                    openImage={(images, index = 0) =>
+                      setCatalogModal({ images, index })
+                    }
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500 col-span-full text-center">
+                  No se encontraron productos.
+                </p>
+              )}
+            </div>
+          </section>
+          {/* --- SECCIÓN OPINIONES --- */}
+          <Opiniones />
+
+          {/* --- SECCIÓN CONTACTO --- */}
+          <section id="contacto" className="py-20 px-6 bg-white text-center">
+            <h2 className="text-3xl font-bold mb-6">Contáctanos</h2>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-green-50 hover:bg-green-100 transition"
+              >
+                <img
+                  src="/whatsapp-logo.png"
+                  alt="WhatsApp"
+                  className="w-6 h-6"
+                />
+                <span className="text-green-700 font-medium">WhatsApp</span>
+              </a>
+              <a
+                href={`https://www.instagram.com/${INSTAGRAM_USER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-pink-50 hover:bg-pink-100 transition"
+              >
+                <img
+                  src="/instagram-logo.png"
+                  alt="Instagram"
+                  className="w-6 h-6"
+                />
+                <span className="text-pink-600 font-medium">Instagram</span>
+              </a>
+            </div>
+          </section>
+          {/* --- FOOTER --- */}
+        </main>
+
+        {/* --- FOOTER --- */}
+        <footer className="bg-gray-900 text-gray-300 py-8 text-center">
+          <div className="max-w-6xl mx-auto px-6">
+            <p className="mb-2">
+              &copy; {new Date().getFullYear()} Lovelis. Todos los derechos
+              reservados.
+            </p>
+            <p className="text-sm text-gray-500">
+              Desarrollado con ❤️ por Santiago Lloveras
+            </p>
+            <div className="flex justify-center gap-4 text-gray-400 text-xl mt-3">
+              <a
+                href="#"
+                className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+              >
+                <i className="fab fa-facebook"></i>
+              </a>
+              <a
+                href="#"
+                className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+              >
+                <i className="fab fa-instagram"></i>
+              </a>
+              <a
+                href="#"
+                className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+              >
+                <i className="fab fa-twitter"></i>
+              </a>
+            </div>
+          </div>
+        </footer>
+
+        {catalogModal && (
+          <ZoomableImageModal
+            images={catalogModal.images}
+            index={catalogModal.index}
+            onClose={() => setCatalogModal(null)}
+            setIndex={(i) => setCatalogModal((m) => ({ ...m, index: i }))}
+          />
+        )}
+
+        <FloatingButtons />
+      </div>
+    </ToastProvider>
   );
 }
