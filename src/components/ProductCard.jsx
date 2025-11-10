@@ -1,67 +1,90 @@
-import { useState, useContext } from "react";
-import { INSTAGRAM_USER } from "../data/contactConfig";
+import React, { useState, useContext, useRef, useEffect } from "react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { INSTAGRAM_USER, WHATSAPP_NUMBER } from "../data/contactConfig";
 import { ToastContext } from "./ToastProvider";
 
 export default function ProductCard({ p, openImage }) {
-  // Normalize images: accept comma/semicolon/pipe separated lists or single URL
-  // Prefer explicit array `p.images` from parser; fallback to parsing `p.image` string
   const imgs =
-    (Array.isArray(p?.images) && p.images.length
-      ? p.images
-      : (p?.image || "")
-          .toString()
-          .split(/[;,|\n]+/)
-          .map((s) => s.trim())
-          .filter(Boolean)) || [];
+    p && p.images && p.images.length ? p.images : p && p.image ? [p.image] : [];
 
   const [loaded, setLoaded] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const optionsRef = useRef(null);
+  const idRef = useRef("pc_" + Math.random().toString(36).slice(2, 9));
   const { showToast } = useContext(ToastContext);
 
-  const consultInstagram = (e) => {
-    e.stopPropagation();
-    const message = `Hola! Quisiera consultar por el producto: ${
-      p?.name || ""
-    }${p?.price ? " - " + p.price : ""}${p?.link ? " - " + p.link : ""}`;
-    const encoded = encodeURIComponent(message);
-
-    // App deep link (best-effort)
-    const appUrl = `instagram://direct?text=${encoded}`;
-    const webUrl = `https://www.instagram.com/direct/t/${INSTAGRAM_USER}/`;
-
-    // Try to open app (works on some mobile clients)
-    try {
-      window.location.href = appUrl;
-    } catch {
-      /* noop */
+  useEffect(() => {
+    if (!showOptions) return;
+    function onDoc(ev) {
+      if (!optionsRef.current) return;
+      if (!optionsRef.current.contains(ev.target)) setShowOptions(false);
     }
+    document.addEventListener("click", onDoc);
+    return () => document.removeEventListener("click", onDoc);
+  }, [showOptions]);
 
-    // After a short delay, fallback: copy the message and open web DM
-    setTimeout(() => {
-      if (navigator.clipboard) {
-        navigator.clipboard
-          .writeText(message)
-          .then(() => showToast("Mensaje copiado al portapapeles"))
-          .catch(() => showToast("No fue posible copiar el mensaje"));
-      } else {
-        showToast("No fue posible copiar el mensaje");
-      }
+  // Close this popover when any other product card opens its popover
+  useEffect(() => {
+    function onOtherOpen(e) {
       try {
-        window.open(webUrl, "_blank");
-      } catch {
-        /* noop */
+        const otherId = e && e.detail;
+        if (!otherId) return;
+        if (otherId !== idRef.current) {
+          setShowOptions(false);
+        }
+      } catch (err) {
+        void err;
+      }
+    }
+    window.addEventListener("productcard:open", onOtherOpen);
+    return () => window.removeEventListener("productcard:open", onOtherOpen);
+  }, []);
+
+  function consultInstagram(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var appUser = "instagram://user?username=" + INSTAGRAM_USER;
+    var profileWeb = "https://www.instagram.com/" + INSTAGRAM_USER;
+    try {
+      window.location.href = appUser;
+      showToast("Abriendo Instagram...");
+    } catch (err) {
+      void err;
+    }
+    setTimeout(function () {
+      try {
+        window.open(profileWeb, "_blank");
+      } catch (err) {
+        void err;
       }
     }, 700);
-  };
+  }
+
+  function consultWhatsApp(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var message =
+      "Hola! Quisiera consultar por el producto: " +
+      (p && p.name ? p.name : "");
+    if (p && p.price) message += " - " + p.price;
+    if (p && p.link) message += " - " + p.link;
+    var encoded = encodeURIComponent(message);
+    var waUrl = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encoded;
+    try {
+      window.open(waUrl, "_blank");
+    } catch (err) {
+      void err;
+      showToast("No fue posible abrir WhatsApp");
+    }
+  }
 
   return (
     <div
-      className="group relative bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer w-full max-w-xs flex flex-col h-full focus:outline-none"
+      className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer w-full max-w-xs flex flex-col h-full focus:outline-none"
       role="button"
       tabIndex={0}
-      onClick={() => {
+      onClick={function () {
         if (openImage && imgs.length) openImage(imgs, 0);
       }}
-      onKeyDown={(e) => {
+      onKeyDown={function (e) {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           if (openImage && imgs.length) openImage(imgs, 0);
@@ -79,23 +102,24 @@ export default function ProductCard({ p, openImage }) {
         </>
       )}
 
-      {/* hover overlay */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         <span className="text-white text-sm font-medium bg-black/40 px-4 py-2 rounded">
           Ver
         </span>
       </div>
 
-      <div className="w-full h-48 overflow-hidden bg-gray-100 relative">
+      <div className="w-full h-48 overflow-hidden bg-gray-100 relative rounded-t-2xl">
         {!loaded && (
           <div className="absolute inset-0 animate-pulse bg-gray-200" />
         )}
         {imgs[0] ? (
           <img
             src={imgs[0]}
-            alt={p?.name || "producto"}
-            className="w-full h-48 object-cover"
-            onLoad={() => setLoaded(true)}
+            alt={(p && p.name) || "producto"}
+            className="w-full h-48 object-cover rounded-t-2xl"
+            onLoad={function () {
+              setLoaded(true);
+            }}
           />
         ) : (
           <div className="w-full h-48 flex items-center justify-center text-gray-400">
@@ -106,20 +130,93 @@ export default function ProductCard({ p, openImage }) {
 
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{p?.name}</h3>
-          {p?.price && (
+          <h3 className="text-sm font-semibold text-gray-900">
+            {(p && p.name) || ""}
+          </h3>
+          {p && p.price && (
             <div className="text-sm text-gray-700 mt-1">{p.price}</div>
           )}
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex items-center gap-3 relative">
           <button
             type="button"
-            onClick={(e) => consultInstagram(e)}
+            onClick={function (e) {
+              e.stopPropagation();
+              setShowOptions(function (s) {
+                const next = !s;
+                if (next) {
+                  // announce that this card opened its popover so others close
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent("productcard:open", {
+                        detail: idRef.current,
+                      })
+                    );
+                  } catch (err) {
+                    void err;
+                  }
+                }
+                return next;
+              });
+            }}
+            aria-expanded={showOptions}
             className="inline-flex items-center gap-2 bg-pink-500 text-white px-3 py-2 rounded-full text-sm hover:bg-pink-600 transition focus:outline-none focus:ring-2 focus:ring-pink-300"
           >
             Consultar
           </button>
+
+          <AnimatePresence>
+            {showOptions && (
+              <Motion.div
+                ref={optionsRef}
+                initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: -6 }}
+                transition={{ duration: 0.12 }}
+                className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-black/10 z-50 overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={function (e) {
+                    consultWhatsApp(e);
+                    setShowOptions(false);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <img
+                    src="/whatsapp-logo.png"
+                    alt="WhatsApp"
+                    className="w-5 h-5"
+                  />
+                  <div className="flex flex-col text-sm">
+                    <span className="font-medium">WhatsApp</span>
+                    <span className="text-xs text-gray-500">
+                      Mensaje rápido
+                    </span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={function (e) {
+                    consultInstagram(e);
+                    setShowOptions(false);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <img
+                    src="/instagram-logo.png"
+                    alt="Instagram"
+                    className="w-5 h-5"
+                  />
+                  <div className="flex flex-col text-sm">
+                    <span className="font-medium">Instagram</span>
+                    <span className="text-xs text-gray-500">Abrir perfil</span>
+                  </div>
+                </button>
+              </Motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
