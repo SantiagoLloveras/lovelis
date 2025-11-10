@@ -1,10 +1,9 @@
+/* eslint-disable-next-line no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import Papa from "papaparse";
 import ProductCard from "./components/ProductCard";
-
-const WHATSAPP_NUMBER = "59896989871";
-const INSTAGRAM_USER = "lovelisuy";
+import { WHATSAPP_NUMBER, INSTAGRAM_USER } from "./data/contactConfig";
 
 // 🧭 HEADER (con menú hamburguesa responsive)
 function Header() {
@@ -304,7 +303,6 @@ function Opiniones() {
     }
   }, [imagenes]);
 
-  const totalPages = Math.ceil(imagenes.length / perPage);
   const currentOpinions = imagenes.slice(
     index * perPage,
     index * perPage + perPage

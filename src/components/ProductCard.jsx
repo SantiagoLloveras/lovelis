@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { useState } from "react";
+import { INSTAGRAM_USER } from "../data/contactConfig";
 
 export default function ProductCard({ p, openImage }) {
   // Normalize images: accept comma/semicolon/pipe separated lists or single URL
@@ -14,10 +14,51 @@ export default function ProductCard({ p, openImage }) {
           .filter(Boolean)) || [];
 
   const [loaded, setLoaded] = useState(false);
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  const consultInstagram = (e) => {
+    e.stopPropagation();
+    const message = `Hola! Quisiera consultar por el producto: ${
+      p?.name || ""
+    }${p?.price ? " - " + p.price : ""}${p?.link ? " - " + p.link : ""}`;
+    const encoded = encodeURIComponent(message);
+
+    // App deep link (best-effort)
+    const appUrl = `instagram://direct?text=${encoded}`;
+    const webUrl = `https://www.instagram.com/direct/t/${INSTAGRAM_USER}/`;
+
+    // Try to open app (works on some mobile clients)
+    try {
+      window.location.href = appUrl;
+    } catch {
+      /* noop */
+    }
+
+    // After a short delay, fallback: copy the message and open web DM
+    setTimeout(() => {
+      if (navigator.clipboard) {
+        navigator.clipboard
+          .writeText(message)
+          .then(() => showToast("Mensaje copiado al portapapeles"))
+          .catch(() => showToast("No fue posible copiar el mensaje"));
+      } else {
+        showToast("No fue posible copiar el mensaje");
+      }
+      try {
+        window.open(webUrl, "_blank");
+      } catch {
+        /* noop */
+      }
+    }, 700);
+  };
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
+    <div
       className="group relative bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer w-full max-w-xs flex flex-col h-full focus:outline-none"
       role="button"
       tabIndex={0}
@@ -53,52 +94,44 @@ export default function ProductCard({ p, openImage }) {
         {!loaded && (
           <div className="absolute inset-0 animate-pulse bg-gray-200" />
         )}
-        <img
-          src={imgs[0]}
-          alt={p?.name}
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setLoaded(true)}
-          className="w-full h-full object-cover object-center"
-        />
+        {imgs[0] ? (
+          <img
+            src={imgs[0]}
+            alt={p?.name || "producto"}
+            className="w-full h-48 object-cover"
+            onLoad={() => setLoaded(true)}
+          />
+        ) : (
+          <div className="w-full h-48 flex items-center justify-center text-gray-400">
+            Sin imagen
+          </div>
+        )}
       </div>
 
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
-          {!loaded ? (
-            <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
-            </div>
-          ) : (
-            <h3 className="text-lg font-semibold text-gray-800">{p?.name}</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{p?.name}</h3>
+          {p?.price && (
+            <div className="text-sm text-gray-700 mt-1">{p.price}</div>
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <div className="text-left">
-            {!loaded ? (
-              <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse" />
-            ) : (
-              p?.price && <p className="text-pink-600 font-bold">{p.price}</p>
-            )}
-          </div>
-
-          <a
-            href={
-              p?.link ||
-              `https://www.instagram.com/direct/t/USUARIO/?text=Hola!%20Quisiera%20consultar%20por%20el%20producto:%20${encodeURIComponent(
-                p?.name || ""
-              )}`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={(e) => consultInstagram(e)}
             className="inline-flex items-center gap-2 bg-pink-500 text-white px-3 py-2 rounded-full text-sm hover:bg-pink-600 transition focus:outline-none focus:ring-2 focus:ring-pink-300"
-            onClick={(e) => e.stopPropagation()}
           >
             Consultar
-          </a>
+          </button>
         </div>
       </div>
-    </motion.div>
+
+      {toast && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 bg-black/80 text-white text-xs px-3 py-2 rounded">
+          {toast}
+        </div>
+      )}
+    </div>
   );
 }
