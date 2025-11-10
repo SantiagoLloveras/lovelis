@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+      },
       colors: {
         pink: {
           50: "#fff0f5",
@@ -20,6 +23,9 @@ export default {
           900: "#4d0026",
         },
         beige: "#fff8f2",
+      },
+      boxShadow: {
+        'soft': '0 6px 18px rgba(16,24,40,0.08)',
       },
     },
   },

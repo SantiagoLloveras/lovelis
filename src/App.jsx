@@ -136,26 +136,27 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight") setIndex((i) => (i + 1) % images.length);
+      if (e.key === "ArrowRight") setIndex((index + 1) % images.length);
       if (e.key === "ArrowLeft")
-        setIndex((i) => (i - 1 + images.length) % images.length);
+        setIndex((index - 1 + images.length) % images.length);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [images, setIndex, onClose]);
+  }, [images, index, setIndex, onClose]);
 
   useEffect(() => {
     const el = imgRef.current;
+    if (!el) return;
     let distance = 0;
     const start = (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches && e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         distance = Math.sqrt(dx * dx + dy * dy);
       }
     };
     const move = (e) => {
-      if (e.touches.length === 2) {
+      if (e.touches && e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const newDist = Math.sqrt(dx * dx + dy * dy);
@@ -170,7 +171,7 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
       el.removeEventListener("touchstart", start);
       el.removeEventListener("touchmove", move);
     };
-  }, []);
+  }, [imgRef]);
 
   const handleWheel = (e) => {
     setScale((s) => Math.min(Math.max(s + e.deltaY * -0.001, 1), 4));
@@ -191,14 +192,14 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 cursor-zoom-out select-none"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 cursor-zoom-out select-none"
       onClick={onClose}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <div
-        className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden flex items-center justify-center"
+        className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col items-center justify-center"
         onClick={(e) => e.stopPropagation()}
         onWheel={handleWheel}
         onMouseDown={startDrag}
@@ -207,30 +208,71 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         onMouseLeave={stopDrag}
         ref={imgRef}
       >
+        <div className="absolute top-3 inset-x-0 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/40 text-white text-sm px-3 py-1 rounded-full pointer-events-auto">
+            {index + 1} / {images.length}
+          </div>
+        </div>
+
+        <button
+          aria-label="Cerrar"
+          onClick={onClose}
+          className="absolute top-3 right-3 z-50 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-pink-300"
+        >
+          ✕
+        </button>
+
         <motion.img
           key={index}
           src={images[index]}
-          alt="Zoom"
-          className="rounded-2xl object-contain max-h-[85vh] max-w-full"
+          alt={`Imagen ${index + 1}`}
+          className="rounded-2xl object-contain max-h-[75vh] max-w-full"
           animate={{ scale, x: pos.x, y: pos.y }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
         />
+
         {images.length > 1 && (
           <>
             <button
               onClick={() =>
-                setIndex((i) => (i - 1 + images.length) % images.length)
+                setIndex((index - 1 + images.length) % images.length)
               }
               className="absolute left-3 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-pink-300"
             >
               ‹
             </button>
             <button
-              onClick={() => setIndex((i) => (i + 1) % images.length)}
+              onClick={() => setIndex((index + 1) % images.length)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-pink-300"
             >
               ›
             </button>
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 items-center">
+              <div
+                className="flex gap-2 overflow-x-auto py-1 px-2"
+                style={{ maxWidth: "70vw" }}
+              >
+                {images.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setIndex(i)}
+                    className={`flex-shrink-0 w-20 h-12 rounded-md overflow-hidden border-2 focus:outline-none ${
+                      i === index
+                        ? "border-pink-400 scale-105"
+                        : "border-transparent"
+                    }`}
+                    aria-label={`Ir a imagen ${i + 1}`}
+                  >
+                    <img
+                      src={src}
+                      alt={`Thumb ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -393,9 +435,13 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100 overflow-visible">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100 overflow-visible font-sans antialiased">
       <link
         href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap"
+        rel="stylesheet"
+      />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
         rel="stylesheet"
       />
       <meta
@@ -508,17 +554,29 @@ export default function App() {
       <footer className="bg-gray-900 text-gray-300 py-8 text-center">
         <div className="max-w-6xl mx-auto px-6">
           <p className="mb-2">
-            &copy; {new Date().getFullYear()} Mi Marca. Todos los derechos
+            &copy; {new Date().getFullYear()} Lovelis. Todos los derechos
             reservados.
           </p>
+          <p className="text-sm text-gray-500">
+            Desarrollado con ❤️ por Santiago Lloveras
+          </p>
           <div className="flex justify-center gap-4 text-gray-400 text-xl mt-3">
-            <a href="#" className="hover:text-white transition-colors">
+            <a
+              href="#"
+              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+            >
               <i className="fab fa-facebook"></i>
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a
+              href="#"
+              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+            >
               <i className="fab fa-instagram"></i>
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a
+              href="#"
+              className="hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-pink-300 rounded"
+            >
               <i className="fab fa-twitter"></i>
             </a>
           </div>
