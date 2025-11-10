@@ -8,7 +8,6 @@ const INSTAGRAM_USER = "lovelisuy";
 
 // 🧭 HEADER
 function Header() {
-  // ✨ Efecto hover con framer-motion
   return (
     <header className="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 border-b border-black/10">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -44,6 +43,7 @@ function Header() {
           </motion.h1>
         </motion.div>
 
+        {/* 🧭 NAV DESKTOP */}
         <nav className="hidden sm:flex items-center gap-4 text-sm text-gray-700">
           <a href="#catalogo" className="hover:text-pink-500 text-black">
             Catálogo
@@ -53,6 +53,19 @@ function Header() {
           </a>
           <a href="#contacto" className="hover:text-pink-500 text-black">
             Contacto
+          </a>
+        </nav>
+
+        {/* 📱 NAV MÓVIL */}
+        <nav className="flex sm:hidden gap-3 text-sm text-gray-700">
+          <a href="#catalogo" className="hover:text-pink-500">
+            🛍️
+          </a>
+          <a href="#opiniones" className="hover:text-pink-500">
+            💬
+          </a>
+          <a href="#contacto" className="hover:text-pink-500">
+            📞
           </a>
         </nav>
       </div>
@@ -68,13 +81,11 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const imgRef = useRef(null);
 
-  // 🔒 Bloquear scroll del body
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => (document.body.style.overflow = "");
   }, []);
 
-  // Cerrar con teclas
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape") onClose();
@@ -85,35 +96,6 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [images, setIndex, onClose]);
-
-  // Zoom táctil
-  useEffect(() => {
-    const el = imgRef.current;
-    let distance = 0;
-    const start = (e) => {
-      if (e.touches.length === 2) {
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        distance = Math.sqrt(dx * dx + dy * dy);
-      }
-    };
-    const move = (e) => {
-      if (e.touches.length === 2) {
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const newDist = Math.sqrt(dx * dx + dy * dy);
-        const delta = newDist / distance;
-        setScale((s) => Math.min(Math.max(s * delta, 1), 4));
-        distance = newDist;
-      }
-    };
-    el.addEventListener("touchstart", start);
-    el.addEventListener("touchmove", move);
-    return () => {
-      el.removeEventListener("touchstart", start);
-      el.removeEventListener("touchmove", move);
-    };
-  }, []);
 
   const handleWheel = (e) => {
     setScale((s) => Math.min(Math.max(s + e.deltaY * -0.001, 1), 4));
@@ -237,7 +219,7 @@ function ProductCard({ p, openImage }) {
   );
 }
 
-// 🖼️ OPINIONES
+// 💬 OPINIONES
 function Opiniones() {
   const [imagenes, setImagenes] = useState([]);
   const [index, setIndex] = useState(0);
@@ -310,7 +292,31 @@ function Opiniones() {
   );
 }
 
-// 🌸 APP
+// 🌸 BOTONES FLOTANTES
+function FloatingButtons() {
+  return (
+    <div className="fixed bottom-5 right-5 flex flex-col gap-3 z-50">
+      <a
+        href={`https://wa.me/${WHATSAPP_NUMBER}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-green-500 p-3 rounded-full shadow-lg hover:scale-110 hover:bg-green-600 transition transform"
+      >
+        <img src="/whatsapp-logo.png" alt="WhatsApp" className="w-6 h-6" />
+      </a>
+      <a
+        href={`https://www.instagram.com/${INSTAGRAM_USER}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-pink-500 p-3 rounded-full shadow-lg hover:scale-110 hover:bg-pink-600 transition transform"
+      >
+        <img src="/instagram-logo.png" alt="Instagram" className="w-6 h-6" />
+      </a>
+    </div>
+  );
+}
+
+// 🌸 APP PRINCIPAL
 export default function App() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(["Todo"]);
@@ -379,11 +385,12 @@ export default function App() {
         {/* 🛍️ CATÁLOGO */}
         <section
           id="catalogo"
-          className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-6 mb-8"
+          className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-8"
         >
           <h2 className="text-3xl font-bold text-black mb-8 text-center">
             Catálogo
           </h2>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
             <input
               type="text"
@@ -396,7 +403,6 @@ export default function App() {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="border border-black/20 rounded-full px-4 py-2 focus:ring-2 focus:ring-pink-300 outline-none capitalize"
-              style={{ width: "auto", minWidth: "120px" }}
             >
               {categories.map((cat) => (
                 <option key={cat}>{cat}</option>
@@ -404,9 +410,10 @@ export default function App() {
             </select>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6">
+          {/* 🧩 Catálogo responsive */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {filtered.length === 0 ? (
-              <p className="text-gray-500 text-center">
+              <p className="text-gray-500 text-center col-span-full">
                 No se encontraron productos.
               </p>
             ) : (
@@ -446,8 +453,7 @@ export default function App() {
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-
-2 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition"
+              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition"
             >
               <img
                 src="/whatsapp-logo.png"
@@ -473,7 +479,6 @@ export default function App() {
         </section>
       </main>
 
-      {/* 🌸 FOOTER */}
       <footer className="text-center py-6 text-gray-500 text-sm border-t border-black/10 mt-10 bg-white/60">
         <p>
           © {new Date().getFullYear()}{" "}
@@ -492,6 +497,9 @@ export default function App() {
           </a>
         </p>
       </footer>
+
+      {/* 🌸 Botones flotantes */}
+      <FloatingButtons />
     </div>
   );
 }
