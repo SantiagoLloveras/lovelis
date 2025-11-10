@@ -43,7 +43,6 @@ function Header() {
           </motion.h1>
         </motion.div>
 
-        {/* 🧭 NAV DESKTOP */}
         <nav className="hidden sm:flex items-center gap-4 text-sm text-gray-700">
           <a href="#catalogo" className="hover:text-pink-500 text-black">
             Catálogo
@@ -53,19 +52,6 @@ function Header() {
           </a>
           <a href="#contacto" className="hover:text-pink-500 text-black">
             Contacto
-          </a>
-        </nav>
-
-        {/* 📱 NAV MÓVIL */}
-        <nav className="flex sm:hidden gap-3 text-sm text-gray-700">
-          <a href="#catalogo" className="hover:text-pink-500">
-            🛍️
-          </a>
-          <a href="#opiniones" className="hover:text-pink-500">
-            💬
-          </a>
-          <a href="#contacto" className="hover:text-pink-500">
-            📞
           </a>
         </nav>
       </div>
@@ -96,6 +82,34 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [images, setIndex, onClose]);
+
+  useEffect(() => {
+    const el = imgRef.current;
+    let distance = 0;
+    const start = (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        distance = Math.sqrt(dx * dx + dy * dy);
+      }
+    };
+    const move = (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const newDist = Math.sqrt(dx * dx + dy * dy);
+        const delta = newDist / distance;
+        setScale((s) => Math.min(Math.max(s * delta, 1), 4));
+        distance = newDist;
+      }
+    };
+    el.addEventListener("touchstart", start);
+    el.addEventListener("touchmove", move);
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchmove", move);
+    };
+  }, []);
 
   const handleWheel = (e) => {
     setScale((s) => Math.min(Math.max(s + e.deltaY * -0.001, 1), 4));
@@ -219,7 +233,7 @@ function ProductCard({ p, openImage }) {
   );
 }
 
-// 💬 OPINIONES
+// 🖼️ OPINIONES
 function Opiniones() {
   const [imagenes, setImagenes] = useState([]);
   const [index, setIndex] = useState(0);
@@ -252,7 +266,7 @@ function Opiniones() {
   return (
     <section
       id="opiniones"
-      className="py-12 text-center bg-white/80 rounded-3xl border border-black/10 shadow-sm px-6 mb-10"
+      className="py-12 text-center bg-white/80 rounded-3xl border border-black/10 shadow-sm px-6 mb-10 overflow-visible w-full"
     >
       <h3 className="text-2xl font-bold text-black mb-8">Opiniones</h3>
       <AnimatePresence mode="wait">
@@ -262,7 +276,7 @@ function Opiniones() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
-          className="grid sm:grid-cols-3 gap-4 justify-items-center"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 justify-items-center"
         >
           {currentOpinions.map((op, i) => (
             <motion.div
@@ -292,15 +306,15 @@ function Opiniones() {
   );
 }
 
-// 🌸 BOTONES FLOTANTES
+// ✨ BOTONES FLOTANTES
 function FloatingButtons() {
   return (
-    <div className="fixed bottom-5 right-5 flex flex-col gap-3 z-50">
+    <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
       <a
         href={`https://wa.me/${WHATSAPP_NUMBER}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="bg-green-500 p-3 rounded-full shadow-lg hover:scale-110 hover:bg-green-600 transition transform"
+        className="bg-green-500 hover:bg-green-600 p-4 rounded-full shadow-lg transition transform hover:scale-105"
       >
         <img src="/whatsapp-logo.png" alt="WhatsApp" className="w-6 h-6" />
       </a>
@@ -308,7 +322,7 @@ function FloatingButtons() {
         href={`https://www.instagram.com/${INSTAGRAM_USER}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="bg-pink-500 p-3 rounded-full shadow-lg hover:scale-110 hover:bg-pink-600 transition transform"
+        className="bg-pink-500 hover:bg-pink-600 p-4 rounded-full shadow-lg transition transform hover:scale-105"
       >
         <img src="/instagram-logo.png" alt="Instagram" className="w-6 h-6" />
       </a>
@@ -334,18 +348,19 @@ export default function App() {
           const parsed = res.data
             .map((row, i) => ({
               id: row.id || i,
-              name: row.nombre,
+              name: row.nombre?.trim(),
               price: row.precio,
               image: row.imagen,
               link: row.enlace,
-              stock: row.stock?.toLowerCase() === "si",
+              stock: row.stock?.toLowerCase().includes("si"),
               category:
                 row.categoria?.charAt(0).toUpperCase() +
                   row.categoria?.slice(1).toLowerCase() || "General",
             }))
             .filter((p) => p.name);
           setProducts(parsed);
-          setCategories(["Todo", ...new Set(parsed.map((p) => p.category))]);
+          const uniqueCats = [...new Set(parsed.map((p) => p.category))];
+          setCategories(["Todo", ...uniqueCats]);
         },
       }
     );
@@ -360,14 +375,18 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-beige text-gray-800 border-t-8 border-pink-100 overflow-visible">
       <link
         href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap"
         rel="stylesheet"
       />
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
       <Header />
 
-      <main className="max-w-6xl mx-auto px-4 pt-28 pb-8">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 pt-28 pb-8 overflow-visible">
         <section className="text-center bg-white/70 rounded-3xl border border-black/10 shadow-sm mb-8 py-8">
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
@@ -385,12 +404,11 @@ export default function App() {
         {/* 🛍️ CATÁLOGO */}
         <section
           id="catalogo"
-          className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-8"
+          className="py-6 bg-white/80 rounded-3xl border border-black/10 shadow-sm px-4 sm:px-6 mb-8 overflow-visible w-full"
         >
           <h2 className="text-3xl font-bold text-black mb-8 text-center">
             Catálogo
           </h2>
-
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
             <input
               type="text"
@@ -402,53 +420,52 @@ export default function App() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="border border-black/20 rounded-full px-4 py-2 focus:ring-2 focus:ring-pink-300 outline-none capitalize"
+              className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/3 focus:ring-2 focus:ring-pink-300 outline-none bg-white text-gray-700"
             >
               {categories.map((cat) => (
-                <option key={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* 🧩 Catálogo responsive */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {filtered.length === 0 ? (
+          {/* 🛒 GRID DE PRODUCTOS */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+            {filtered.length > 0 ? (
+              filtered.map((p) => (
+                <ProductCard key={p.id} p={p} openImage={setCatalogModal} />
+              ))
+            ) : (
               <p className="text-gray-500 text-center col-span-full">
                 No se encontraron productos.
               </p>
-            ) : (
-              filtered.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  p={p}
-                  openImage={(img) => setCatalogModal(img)}
-                />
-              ))
             )}
           </div>
+
+          {catalogModal && (
+            <ZoomableImageModal
+              images={[catalogModal]}
+              index={0}
+              onClose={() => setCatalogModal(null)}
+              setIndex={() => {}}
+            />
+          )}
         </section>
 
-        {catalogModal && (
-          <ZoomableImageModal
-            images={[catalogModal]}
-            index={0}
-            onClose={() => setCatalogModal(null)}
-            setIndex={() => {}}
-          />
-        )}
-
+        {/* 💬 OPINIONES */}
         <Opiniones />
 
         {/* 📞 CONTACTO */}
         <section
           id="contacto"
-          className="py-12 text-center bg-white/80 rounded-3xl border border-black/10 shadow-sm px-6"
+          className="text-center py-12 bg-white/80 rounded-3xl border border-black/10 shadow-sm mb-10 px-6"
         >
-          <h3 className="text-2xl font-bold text-black mb-4">Contacto</h3>
-          <p className="text-gray-700 mb-4">
-            Escribinos por WhatsApp o Instagram para pedir productos.
+          <h3 className="text-2xl font-bold text-black mb-6">Contacto</h3>
+          <p className="text-gray-600 mb-6">
+            ¿Querés hacer un pedido o tenés alguna consulta? 💌
           </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex flex-wrap justify-center gap-4">
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
@@ -479,6 +496,7 @@ export default function App() {
         </section>
       </main>
 
+      {/* 🌸 FOOTER */}
       <footer className="text-center py-6 text-gray-500 text-sm border-t border-black/10 mt-10 bg-white/60">
         <p>
           © {new Date().getFullYear()}{" "}
@@ -498,7 +516,7 @@ export default function App() {
         </p>
       </footer>
 
-      {/* 🌸 Botones flotantes */}
+      {/* 🌸 BOTONES FLOTANTES */}
       <FloatingButtons />
     </div>
   );
