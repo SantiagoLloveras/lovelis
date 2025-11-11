@@ -127,6 +127,7 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
+  const lastPosRef = useRef({ x: 0, y: 0 });
   const imgRef = useRef(null);
 
   useEffect(() => {
@@ -149,28 +150,60 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
     const el = imgRef.current;
     if (!el) return;
     let distance = 0;
-    const start = (e) => {
-      if (e.touches && e.touches.length === 2) {
+    const startTouch = (e) => {
+      if (!e.touches) return;
+      if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         distance = Math.sqrt(dx * dx + dy * dy);
+      } else if (e.touches.length === 1) {
+        // start single-finger pan only if zoomed
+        if (scale <= 1) return;
+        setDragging(true);
+        const p = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        setLastPos(p);
+        lastPosRef.current = p;
       }
     };
-    const move = (e) => {
-      if (e.touches && e.touches.length === 2) {
+
+    const moveTouch = (e) => {
+      if (!e.touches) return;
+      if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const newDist = Math.sqrt(dx * dx + dy * dy);
-        const delta = newDist / distance;
+        const delta = newDist / Math.max(distance || newDist, 1);
         setScale((s) => Math.min(Math.max(s * delta, 1), 4));
         distance = newDist;
+      } else if (e.touches.length === 1 && dragging) {
+        // single-finger pan
+        e.preventDefault();
+        const cx = e.touches[0].clientX;
+        const cy = e.touches[0].clientY;
+        const dx = cx - lastPosRef.current.x;
+        const dy = cy - lastPosRef.current.y;
+        setPos((p) => ({ x: p.x + dx, y: p.y + dy }));
+        const p = { x: cx, y: cy };
+        setLastPos(p);
+        lastPosRef.current = p;
       }
     };
-    el.addEventListener("touchstart", start);
-    el.addEventListener("touchmove", move);
+
+    const endTouch = (e) => {
+      if (!e.touches || e.touches.length === 0) {
+        setDragging(false);
+      }
+    };
+
+    el.addEventListener("touchstart", startTouch, { passive: false });
+    el.addEventListener("touchmove", moveTouch, { passive: false });
+    el.addEventListener("touchend", endTouch);
+    el.addEventListener("touchcancel", endTouch);
     return () => {
-      el.removeEventListener("touchstart", start);
-      el.removeEventListener("touchmove", move);
+      el.removeEventListener("touchstart", startTouch);
+      el.removeEventListener("touchmove", moveTouch);
+      el.removeEventListener("touchend", endTouch);
+      el.removeEventListener("touchcancel", endTouch);
     };
   }, [imgRef]);
 
@@ -179,15 +212,21 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   };
 
   const startDrag = (e) => {
+    // only start panning when image is zoomed
+    if (scale <= 1) return;
     setDragging(true);
-    setLastPos({ x: e.clientX, y: e.clientY });
+    const p = { x: e.clientX, y: e.clientY };
+    setLastPos(p);
+    lastPosRef.current = p;
   };
   const onDrag = (e) => {
     if (!dragging) return;
-    const dx = e.clientX - lastPos.x;
-    const dy = e.clientY - lastPos.y;
+    const dx = e.clientX - lastPosRef.current.x;
+    const dy = e.clientY - lastPosRef.current.y;
     setPos((p) => ({ x: p.x + dx, y: p.y + dy }));
-    setLastPos({ x: e.clientX, y: e.clientY });
+    const p = { x: e.clientX, y: e.clientY };
+    setLastPos(p);
+    lastPosRef.current = p;
   };
   const stopDrag = () => setDragging(false);
 
