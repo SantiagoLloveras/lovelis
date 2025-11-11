@@ -208,7 +208,7 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         onMouseLeave={stopDrag}
         ref={imgRef}
       >
-        <div className="absolute top-3 inset-x-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute top-3 left-3 z-50 pointer-events-none">
           <div className="bg-black/40 text-white text-sm px-3 py-1 rounded-full pointer-events-auto">
             {index + 1} / {images.length}
           </div>

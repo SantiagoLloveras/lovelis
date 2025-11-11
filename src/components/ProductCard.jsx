@@ -96,7 +96,7 @@ export default function ProductCard({ p, openImage }) {
           <div className="absolute top-3 right-3 z-20 bg-black/60 text-white text-xs px-2 py-1 rounded">
             {imgs.length} imágenes
           </div>
-          <div className="absolute top-3 left-3 z-20 bg-white/90 text-gray-800 text-xs px-2 py-1 rounded">
+          <div className="absolute -top-3 -left-3 z-20 bg-white/90 text-gray-800 text-xs px-2 py-1 rounded">
             1/{imgs.length}
           </div>
         </>
