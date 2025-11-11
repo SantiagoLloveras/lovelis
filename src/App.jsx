@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Papa from "papaparse";
 import ToastProvider from "./components/ToastProvider";
 import ProductCard from "./components/ProductCard";
+import ContactBubble from "./components/ContactBubble";
 import { WHATSAPP_NUMBER, INSTAGRAM_USER } from "./data/contactConfig";
 
 // 🧭 HEADER (con menú hamburguesa responsive)
@@ -353,29 +354,7 @@ function Opiniones() {
   );
 }
 
-// ✨ BOTONES FLOTANTES
-function FloatingButtons() {
-  return (
-    <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
-      <a
-        href={`https://wa.me/${WHATSAPP_NUMBER}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-green-500 hover:bg-green-600 p-4 rounded-full shadow-lg transition transform hover:scale-105"
-      >
-        <img src="/whatsapp-logo.png" alt="WhatsApp" className="w-6 h-6" />
-      </a>
-      <a
-        href={`https://www.instagram.com/${INSTAGRAM_USER}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-pink-500 hover:bg-pink-600 p-4 rounded-full shadow-lg transition transform hover:scale-105"
-      >
-        <img src="/instagram-logo.png" alt="Instagram" className="w-6 h-6" />
-      </a>
-    </div>
-  );
-}
+// NOTE: replaced FloatingButtons with ContactBubble component (see bottom of App render)
 
 // 🌸 APP PRINCIPAL (sin cambios lógicos, solo asegurado el meta viewport)
 export default function App() {
@@ -592,7 +571,11 @@ export default function App() {
           />
         )}
 
-        <FloatingButtons />
+        <ContactBubble
+          whatsappNumber={WHATSAPP_NUMBER}
+          instagramUser={INSTAGRAM_USER}
+          message={"Hola! Quisiera consultar por un producto"}
+        />
       </div>
     </ToastProvider>
   );
