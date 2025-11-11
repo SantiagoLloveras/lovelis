@@ -185,8 +185,8 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         const cy = e.touches[0].clientY;
         const dx = cx - lastPosRef.current.x;
         const dy = cy - lastPosRef.current.y;
-  const next = { x: pos.x + dx, y: pos.y + dy };
-  clampAndSetPos(next);
+        const next = { x: pos.x + dx, y: pos.y + dy };
+        clampAndSetPos(next);
         const p = { x: cx, y: cy };
         lastPosRef.current = p;
       }
@@ -217,7 +217,6 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
     clampAndSetPos(pos);
   };
 
-  
   function onPointerDown(e) {
     // ignore multi-touch pointers here; touch two-finger handled by touch handlers
     if (e.pointerType === "touch") return;
@@ -249,14 +248,14 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
     if (pointerIdRef.current != null && e.pointerId !== pointerIdRef.current)
       return;
     try {
-      e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId);
+      e.target.releasePointerCapture &&
+        e.target.releasePointerCapture(e.pointerId);
     } catch (err) {
       void err;
     }
     pointerIdRef.current = null;
     setDragging(false);
   }
-  
 
   // Clamp pos so the image never exposes background (based on rendered sizes)
   function clampAndSetPos(next) {
@@ -519,8 +518,8 @@ export default function App() {
   function priceToNumber(str) {
     if (str == null) return NaN;
     let s = String(str).trim();
-  // remove currency symbols and spaces, keep digits, dot and comma and minus
-  s = s.replace(/[^0-9.,-]/g, "");
+    // remove currency symbols and spaces, keep digits, dot and comma and minus
+    s = s.replace(/[^0-9.,-]/g, "");
     // if both dot and comma present, assume dot thousands and comma decimal
     if (s.indexOf(".") !== -1 && s.indexOf(",") !== -1) {
       s = s.replace(/\./g, "").replace(",", ".");
