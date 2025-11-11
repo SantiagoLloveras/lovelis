@@ -126,9 +126,10 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const lastPosRef = useRef({ x: 0, y: 0 });
   const imgRef = useRef(null);
+  const pointerIdRef = useRef(null);
+  const imgElRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -161,7 +162,6 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         if (scale <= 1) return;
         setDragging(true);
         const p = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        setLastPos(p);
         lastPosRef.current = p;
       }
     };
@@ -173,7 +173,10 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const newDist = Math.sqrt(dx * dx + dy * dy);
         const delta = newDist / Math.max(distance || newDist, 1);
-        setScale((s) => Math.min(Math.max(s * delta, 1), 4));
+        const newScale = Math.min(Math.max(scale * delta, 1), 4);
+        setScale(newScale);
+        // ensure pos remains valid after zoom
+        clampAndSetPos(pos);
         distance = newDist;
       } else if (e.touches.length === 1 && dragging) {
         // single-finger pan
@@ -182,9 +185,9 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         const cy = e.touches[0].clientY;
         const dx = cx - lastPosRef.current.x;
         const dy = cy - lastPosRef.current.y;
-        setPos((p) => ({ x: p.x + dx, y: p.y + dy }));
+  const next = { x: pos.x + dx, y: pos.y + dy };
+  clampAndSetPos(next);
         const p = { x: cx, y: cy };
-        setLastPos(p);
         lastPosRef.current = p;
       }
     };
@@ -205,30 +208,76 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
       el.removeEventListener("touchend", endTouch);
       el.removeEventListener("touchcancel", endTouch);
     };
-  }, [imgRef]);
+  }, [imgRef, dragging, pos, scale]);
 
   const handleWheel = (e) => {
-    setScale((s) => Math.min(Math.max(s + e.deltaY * -0.001, 1), 4));
+    const newScale = Math.min(Math.max(scale + e.deltaY * -0.001, 1), 4);
+    setScale(newScale);
+    // clamp pos after zoom
+    clampAndSetPos(pos);
   };
 
-  const startDrag = (e) => {
-    // only start panning when image is zoomed
+  
+  function onPointerDown(e) {
+    // ignore multi-touch pointers here; touch two-finger handled by touch handlers
+    if (e.pointerType === "touch") return;
     if (scale <= 1) return;
+    try {
+      e.target.setPointerCapture(e.pointerId);
+    } catch (err) {
+      void err;
+    }
+    pointerIdRef.current = e.pointerId;
     setDragging(true);
     const p = { x: e.clientX, y: e.clientY };
-    setLastPos(p);
     lastPosRef.current = p;
-  };
-  const onDrag = (e) => {
+  }
+
+  function onPointerMove(e) {
+    if (pointerIdRef.current != null && e.pointerId !== pointerIdRef.current)
+      return;
     if (!dragging) return;
     const dx = e.clientX - lastPosRef.current.x;
     const dy = e.clientY - lastPosRef.current.y;
-    setPos((p) => ({ x: p.x + dx, y: p.y + dy }));
+    const next = { x: pos.x + dx, y: pos.y + dy };
+    clampAndSetPos(next);
     const p = { x: e.clientX, y: e.clientY };
-    setLastPos(p);
     lastPosRef.current = p;
-  };
-  const stopDrag = () => setDragging(false);
+  }
+
+  function onPointerUp(e) {
+    if (pointerIdRef.current != null && e.pointerId !== pointerIdRef.current)
+      return;
+    try {
+      e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId);
+    } catch (err) {
+      void err;
+    }
+    pointerIdRef.current = null;
+    setDragging(false);
+  }
+  
+
+  // Clamp pos so the image never exposes background (based on rendered sizes)
+  function clampAndSetPos(next) {
+    // defer measurement to next frame to ensure DOM updates after scale changes
+    requestAnimationFrame(() => {
+      const imgEl = imgElRef && imgElRef.current;
+      const cont = imgRef && imgRef.current;
+      if (!imgEl || !cont) {
+        setPos(next);
+        return;
+      }
+      const imgRect = imgEl.getBoundingClientRect();
+      const contRect = cont.getBoundingClientRect();
+      // compute how much the image exceeds container in each axis
+      const overflowX = Math.max(0, (imgRect.width - contRect.width) / 2);
+      const overflowY = Math.max(0, (imgRect.height - contRect.height) / 2);
+      const clampedX = Math.min(Math.max(next.x, -overflowX), overflowX);
+      const clampedY = Math.min(Math.max(next.y, -overflowY), overflowY);
+      setPos({ x: Math.round(clampedX), y: Math.round(clampedY) });
+    });
+  }
 
   return (
     <motion.div
@@ -242,10 +291,10 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
         className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col items-center justify-center"
         onClick={(e) => e.stopPropagation()}
         onWheel={handleWheel}
-        onMouseDown={startDrag}
-        onMouseMove={onDrag}
-        onMouseUp={stopDrag}
-        onMouseLeave={stopDrag}
+        onPointerDown={(e) => onPointerDown(e)}
+        onPointerMove={(e) => onPointerMove(e)}
+        onPointerUp={(e) => onPointerUp(e)}
+        onPointerCancel={(e) => onPointerUp(e)}
         ref={imgRef}
       >
         <div className="absolute top-3 left-3 z-50 pointer-events-none">
@@ -266,6 +315,7 @@ function ZoomableImageModal({ images, index, onClose, setIndex }) {
           key={index}
           src={images[index]}
           alt={`Imagen ${index + 1}`}
+          ref={imgElRef}
           className="rounded-2xl object-contain max-h-[75vh] max-w-full"
           animate={{ scale, x: pos.x, y: pos.y }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -469,8 +519,8 @@ export default function App() {
   function priceToNumber(str) {
     if (str == null) return NaN;
     let s = String(str).trim();
-    // remove currency symbols and spaces, keep digits, dot and comma and minus
-    s = s.replace(/[^0-9\.,\-]/g, "");
+  // remove currency symbols and spaces, keep digits, dot and comma and minus
+  s = s.replace(/[^0-9.,-]/g, "");
     // if both dot and comma present, assume dot thousands and comma decimal
     if (s.indexOf(".") !== -1 && s.indexOf(",") !== -1) {
       s = s.replace(/\./g, "").replace(",", ".");
