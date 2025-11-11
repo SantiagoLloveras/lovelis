@@ -7,6 +7,9 @@ export default function ProductCard({ p, openImage }) {
   const imgs =
     p && p.images && p.images.length ? p.images : p && p.image ? [p.image] : [];
 
+  const outOfStock =
+    p && (p.stock === false || p.stock === "no" || p.stock === "0");
+
   const [loaded, setLoaded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef(null);
@@ -78,7 +81,9 @@ export default function ProductCard({ p, openImage }) {
 
   return (
     <div
-      className="group relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer w-full max-w-xs flex flex-col h-full focus:outline-none"
+      className={`group relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer w-full max-w-xs flex flex-col h-full focus:outline-none ${
+        outOfStock ? "opacity-60 grayscale" : ""
+      }`}
       role="button"
       tabIndex={0}
       onClick={function () {
@@ -109,6 +114,11 @@ export default function ProductCard({ p, openImage }) {
       </div>
 
       <div className="w-full h-48 overflow-hidden bg-gray-100 relative rounded-t-2xl">
+        {outOfStock && (
+          <div className="absolute top-3 left-3 z-30 bg-black/75 text-white text-xs px-2 py-1 rounded">
+            Sin stock
+          </div>
+        )}
         {!loaded && (
           <div className="absolute inset-0 animate-pulse bg-gray-200" />
         )}
@@ -133,8 +143,10 @@ export default function ProductCard({ p, openImage }) {
           <h3 className="text-sm font-semibold text-gray-900">
             {(p && p.name) || ""}
           </h3>
-          {p && p.price && (
-            <div className="text-sm text-gray-700 mt-1">{p.price}</div>
+          {p && (p.priceDisplay || p.price) && (
+            <div className="text-sm text-gray-700 mt-1">
+              {p.priceDisplay || p.price}
+            </div>
           )}
         </div>
 
@@ -143,6 +155,7 @@ export default function ProductCard({ p, openImage }) {
             type="button"
             onClick={function (e) {
               e.stopPropagation();
+              if (outOfStock) return; // don't open consult popover when out of stock
               setShowOptions(function (s) {
                 const next = !s;
                 if (next) {
@@ -161,7 +174,12 @@ export default function ProductCard({ p, openImage }) {
               });
             }}
             aria-expanded={showOptions}
-            className="inline-flex items-center gap-2 bg-pink-500 text-white px-3 py-2 rounded-full text-sm hover:bg-pink-600 transition focus:outline-none focus:ring-2 focus:ring-pink-300"
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm transition focus:outline-none focus:ring-2 focus:ring-pink-300 ${
+              outOfStock
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-pink-500 text-white hover:bg-pink-600"
+            }`}
+            disabled={outOfStock}
           >
             Consultar
           </button>

@@ -362,7 +362,10 @@ export default function App() {
   const [categories, setCategories] = useState(["Todo"]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Todo");
+  const [sortOption, setSortOption] = useState("default");
   const [catalogModal, setCatalogModal] = useState(null);
+
+  // Helper: parse a price string into a number once during load
 
   useEffect(() => {
     Papa.parse(
@@ -385,6 +388,18 @@ export default function App() {
                 id: row.id || i,
                 name: row.nombre?.trim(),
                 price: row.precio,
+                numericPrice: priceToNumber(row.precio),
+                // formatted display price (local style + $ prefix)
+                priceDisplay: (() => {
+                  const n = priceToNumber(row.precio);
+                  if (!Number.isFinite(n)) return (row.precio || "").toString();
+                  const isInt = Number.isInteger(n);
+                  const formatter = new Intl.NumberFormat("es-AR", {
+                    minimumFractionDigits: isInt ? 0 : 2,
+                    maximumFractionDigits: 2,
+                  });
+                  return `$ ${formatter.format(n)}`;
+                })(),
                 // keep `image` for compatibility (first one) and `images` as full array
                 image: images[0] || "",
                 images,
@@ -411,6 +426,61 @@ export default function App() {
       (category === "Todo" || p.category === category)
     );
   });
+
+  function priceToNumber(str) {
+    if (str == null) return NaN;
+    let s = String(str).trim();
+    // remove currency symbols and spaces, keep digits, dot and comma and minus
+    s = s.replace(/[^0-9\.,\-]/g, "");
+    // if both dot and comma present, assume dot thousands and comma decimal
+    if (s.indexOf(".") !== -1 && s.indexOf(",") !== -1) {
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else if (s.indexOf(",") !== -1) {
+      // only comma present -> decimal separator
+      s = s.replace(",", ".");
+    }
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  const sorted = (() => {
+    const out = filtered.slice();
+    switch (sortOption) {
+      case "name-asc":
+        out.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        break;
+      case "name-desc":
+        out.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+        break;
+      case "price-asc":
+        out.sort((a, b) => {
+          const na = a.numericPrice;
+          const nb = b.numericPrice;
+          const aFin = Number.isFinite(na);
+          const bFin = Number.isFinite(nb);
+          if (aFin && bFin) return na - nb;
+          if (aFin) return -1;
+          if (bFin) return 1;
+          return 0;
+        });
+        break;
+      case "price-desc":
+        out.sort((a, b) => {
+          const na = a.numericPrice;
+          const nb = b.numericPrice;
+          const aFin = Number.isFinite(na);
+          const bFin = Number.isFinite(nb);
+          if (aFin && bFin) return nb - na;
+          if (aFin) return -1;
+          if (bFin) return 1;
+          return 0;
+        });
+        break;
+      default:
+        break;
+    }
+    return out;
+  })();
 
   return (
     <ToastProvider>
@@ -471,11 +541,23 @@ export default function App() {
                   </option>
                 ))}
               </select>
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="border border-black/20 rounded-full px-4 py-2 w-full sm:w-1/4 focus:ring-2 focus:ring-pink-300 outline-none bg-white text-gray-700"
+                aria-label="Ordenar productos"
+              >
+                <option value="default">Orden: por defecto</option>
+                <option value="name-asc">Nombre: A → Z</option>
+                <option value="name-desc">Nombre: Z → A</option>
+                <option value="price-asc">Precio: menor → Mayor</option>
+                <option value="price-desc">Precio: Mayor → menor</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-              {filtered.length > 0 ? (
-                filtered.map((p) => (
+              {sorted.length > 0 ? (
+                sorted.map((p) => (
                   <ProductCard
                     key={p.id}
                     p={p}
