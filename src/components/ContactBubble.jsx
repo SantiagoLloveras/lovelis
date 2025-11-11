@@ -171,14 +171,48 @@ export default function ContactBubble({
             void err;
           }
           if (!fanAnchor || items.length === 0) return null;
+
+          // viewport geometry and quadrant-based base angle
+          const W = window.innerWidth || document.documentElement.clientWidth;
+          const H = window.innerHeight || document.documentElement.clientHeight;
+          const centerX = W / 2;
+          const centerY = H / 2;
+
+          const count = items.length || 1;
+          const preferredStepDeg = Math.max(18, 40 - (count - 2) * 6);
+          const maxSpreadDeg = 120;
+          const angleStepDeg =
+            count > 1
+              ? Math.min(preferredStepDeg, maxSpreadDeg / (count - 1))
+              : 0;
+          const totalSpreadDeg = angleStepDeg * (count - 1);
+
+          const isRight = fanAnchor.x >= centerX;
+          const isTop = fanAnchor.y < centerY;
+          let baseAngleRad;
+          if (isRight && isTop) {
+            // quadrant 1 (top-right) -> down-left
+            baseAngleRad = Math.atan2(1, -1);
+          } else if (!isRight && isTop) {
+            // quadrant 2 (top-left) -> down-right
+            baseAngleRad = Math.atan2(1, 1);
+          } else if (!isRight && !isTop) {
+            // quadrant 3 (bottom-left) -> up-right (updated)
+            baseAngleRad = Math.atan2(-1, 1);
+          } else {
+            // quadrant 4 (bottom-right) -> up-left (updated)
+            baseAngleRad = Math.atan2(-1, -1);
+          }
+          const baseAngleDeg = (baseAngleRad * 180) / Math.PI;
+          const angleStart = baseAngleDeg - totalSpreadDeg / 2;
+          const radius = W < 420 ? 64 : 84;
+
           return createPortal(
             <div ref={portalRef} className="pointer-events-none">
               <AnimatePresence>
                 {items.map((it, i) => {
-                  const angleStart = 200;
-                  const angleStep = 40;
-                  const angle = ((angleStart + i * angleStep) * Math.PI) / 180;
-                  const radius = 84;
+                  const angle =
+                    ((angleStart + i * angleStepDeg) * Math.PI) / 180;
                   const dx = Math.cos(angle) * radius;
                   const dy = Math.sin(angle) * radius;
                   const size = 48;
@@ -280,7 +314,6 @@ export default function ContactBubble({
           }
           // Attach motion values so the visual offset is animated back to zero
           // (these are read/animated in handleDragEnd)
-          // eslint-disable-next-line react/style-prop-object
           // style will be merged; pass x and y via motion props below
           className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-xl bg-gradient-to-br from-indigo-600 to-indigo-500 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300 relative z-50"
           aria-expanded={open}
